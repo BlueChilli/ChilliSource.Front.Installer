@@ -141,12 +141,13 @@ async function installDepsOnModules() {
     const foo = getDependeciesFromPackages("./src/modules");
     const deps = foo.join(" ");
     console.log("\nyarn add", deps, "\n");
+    foo.unshift("add");
 
-    const cmdLine = "yarn add "+deps;
+    console.log("debug", foo);
 
     //const yarnAdd = await execa(`yarn add ${foo.join(' ')}`);
 
-    const testT =  await execa(cmdLine);
+    const testT =  await execa('yarn', foo);
     console.log(testT.stdout);
 
   } else {
