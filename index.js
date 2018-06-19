@@ -141,9 +141,8 @@ async function installDepsOnModules() {
     const foo = getDependeciesFromPackages("./src/modules");
     console.log("\nyarn add", foo.join(" "), "\n");
 
-    //const yarnAdd = await execa(`yarn add ${foo.join(' ')}`);
-    const testT =  await execa("yarn", ['add', 'lodash']);
-    console.log(testT.stdout);
+    const yarnAdd = await execa(`yarn add ${foo.join(' ')}`);
+    console.log(yarnAdd.stdout);
     return 0;
   } else {
     console.error("This does not look like a react-creat-app project");
