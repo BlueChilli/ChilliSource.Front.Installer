@@ -138,16 +138,12 @@ async function installDepsOnModules() {
     });
 
     console.log("\nLooking for dependencies, and installing ...\n");
-    const foo = getDependeciesFromPackages("./src/modules");
-    const deps = foo.join(" ");
+    const depArray = getDependeciesFromPackages("./src/modules");
+    const deps = depArray.join(" ");
     console.log("\nyarn add", deps, "\n");
-    foo.unshift("add");
+    depArray.unshift("add");
 
-    console.log("debug", foo);
-
-    //const yarnAdd = await execa(`yarn add ${foo.join(' ')}`);
-
-    const testT =  await execa('yarn', foo);
+    const testT =  await execa('yarn', depArray);
     console.log(testT.stdout);
 
   } else {
