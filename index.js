@@ -145,12 +145,12 @@ if (yargs.getMods) {
 
       console.log("\nLooking for dependencies, and installing ...\n");
       const foo = getDependeciesFromPackages("./src/modules");
-      console.log("\nyarn add", foo.join(" "),"\n");
+      console.log("\nyarn add", foo.join(" "), "\n");
 
       try {
-        const runYardAdd = execa.sync(`yarn add ${foo.join(' ')}`);
-        console.log(runYardAdd.stdout);
-      } catch(error) {
+        execa(`yarn add ${foo.join(' ')}`);
+
+      } catch (error) {
         console.error(error);
       }
 
