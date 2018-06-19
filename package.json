@@ -11,5 +11,6 @@
     "inquirer": "^6.0.0",
     "simple-git": "^1.96.0",
     "yargs": "^11.0.0"
-  }
+  },
+  "bin": "./index.js"
 }
