@@ -122,6 +122,35 @@ async function installReactAppWithChilliFront(destinationDir) {
 
 }
 
+async function installDepsOnModules() {
+  if (fs.existsSync("node_modules")
+    && fs.existsSync("src")
+    && fs.existsSync("public")
+  ) {
+
+    const modules = await getSelectedModules(cfmGit)
+
+    mkDir("./src/modules");
+
+    modules.forEach(mod => {
+      console.log("Installing", path.join("./src/modules", mod));
+      fsExtra.copySync(path.join(tmpLocationOfGitoRepo, mod), path.join("./src/modules", mod));
+    });
+
+    console.log("\nLooking for dependencies, and installing ...\n");
+    const foo = getDependeciesFromPackages("./src/modules");
+    console.log("\nyarn add", foo.join(" "), "\n");
+
+    const yarnAdd = await execa(`yarn add ${foo.join(' ')}`);
+    console.log(yarnAdd.stdout);
+
+  } else {
+    console.error("This does not look like a react-creat-app project");
+  }
+
+};
+
+
 if (yargs.install) {
   FreclDirDest = yargs.install;
   mkDir(yargs.install);
@@ -129,38 +158,9 @@ if (yargs.install) {
   installReactAppWithChilliFront(path.resolve(yargs.install));
 }
 
+
 if (yargs.getMods) {
-
-  if (fs.existsSync("node_modules")
-    && fs.existsSync("src")
-    && fs.existsSync("public")
-  ) {
-
-    getSelectedModules(cfmGit).then(modules => {
-      mkDir("./src/modules");
-      modules.forEach(mod => {
-        console.log("Installing", path.join("./src/modules", mod));
-        fsExtra.copySync(path.join(tmpLocationOfGitoRepo, mod), path.join("./src/modules", mod));
-      });
-
-      console.log("\nLooking for dependencies, and installing ...\n");
-      const foo = getDependeciesFromPackages("./src/modules");
-      console.log("\nyarn add", foo.join(" "), "\n");
-
-      try {
-        execa(`yarn add ${foo.join(' ')}`);
-
-      } catch (error) {
-        console.error(error);
-      }
-
-
-    });
-
-  } else {
-    console.error("This does not look like a react-creat-app project");
-  }
-
+  installDepsOnModules();
 }
 
 
