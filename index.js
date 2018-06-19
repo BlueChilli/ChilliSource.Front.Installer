@@ -146,10 +146,16 @@ if (yargs.getMods) {
       console.log("\nLooking for dependencies, and installing ...\n");
       const foo = getDependeciesFromPackages("./src/modules");
       console.log("\nyarn add", foo.join(" "),"\n");
-      const runYardAdd = execa.sync(`yarn add ${foo.join(' ')}`);
-      console.log(runYardAdd.stdout);
-    });
 
+      try {
+        const runYardAdd = execa.sync(`yarn add ${foo.join(' ')}`);
+        console.log(runYardAdd.stdout);
+      } catch(error) {
+        console.error(error);
+      }
+
+
+    });
 
   } else {
     console.error("This does not look like a react-creat-app project");
