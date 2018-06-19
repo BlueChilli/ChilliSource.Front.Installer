@@ -142,9 +142,7 @@ async function installDepsOnModules() {
     console.log("\nyarn add", foo.join(" "), "\n");
 
     //const yarnAdd = await execa(`yarn add ${foo.join(' ')}`);
-    const yarnAdd = await execa(`yarn add lodash`);
-
-    console.log(yarnAdd.stdout);
+    return  await execa(`yarn add lodash`);
 
   } else {
     console.error("This does not look like a react-creat-app project");
