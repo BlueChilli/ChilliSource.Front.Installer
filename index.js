@@ -61,6 +61,36 @@ async function getSelectedModules(csRepo) {
   return selected['selectedModules'];
 }
 
+const walkSync = function (dir, filelist) {
+  if (dir[dir.length - 1] !== '/') dir = dir.concat('/');
+  files = fs.readdirSync(dir);
+  filelist = filelist || [];
+  files.forEach(function (file) {
+    if (fs.statSync(dir + file).isDirectory()) {
+      filelist = walkSync(dir + file + '/', filelist);
+    }
+    else {
+      filelist.push(dir + file);
+    }
+  });
+  return filelist;
+};
+
+const getDependeciesFromPackages = (moduleDir) => {
+
+  const test = walkSync(moduleDir);
+  const packageLocations = test.filter(location => location.endsWith(".packages"));
+  const packageContents = packageLocations.map(packageLocation => {
+    return fs.readFileSync(packageLocation, "utf8").split(/[\r\n]+/);
+  }).reduce((acc, val) => acc.concat(val), []).sort().filter(function (item, pos, self) {
+    return self.indexOf(item) === pos;
+  });
+
+  return packageContents;
+
+};
+
+
 ////////////////////////////////////////////////////////////////////////
 
 
@@ -111,8 +141,15 @@ if (yargs.getMods) {
       modules.forEach(mod => {
         console.log("Installing", path.join("./src/modules", mod));
         fsExtra.copySync(path.join(tmpLocationOfGitoRepo, mod), path.join("./src/modules", mod));
-      })
+      });
+
+      console.log("\nLooking for dependencies, and installing ...\n");
+      const foo = getDependeciesFromPackages("./src/modules");
+      const runYardAdd = execa.sync("yarn add", foo);
+      console.log(runYardAdd.stdout);
     });
+
+
   } else {
     console.error("This does not look like a react-creat-app project");
   }
