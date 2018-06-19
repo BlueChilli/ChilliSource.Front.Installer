@@ -25,8 +25,8 @@ const scripts = {
 const tmpLocationOfGitoRepo = path.join(os.tmpdir(), "chillisaucefrontmodules");
 
 const cfmGit = "git@github.com:BlueChilli/ChilliSource.Front.Modules.git";
-const currentDir = process.cwd();
-const templateDir = path.join(currentDir, "templates");
+//const currentDir = process.cwd();
+const templateDir = path.join(__dirname, "templates");
 
 var spinner = new Spinner('%s');
 spinner.setSpinnerString('|/-\\');
