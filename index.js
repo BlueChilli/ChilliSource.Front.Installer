@@ -42,7 +42,7 @@ async function getSelectedModules(csRepo) {
   const isRepo = await simpleGit.checkIsRepo();
   spinner.start();
   if (isRepo) {
-    //await simpleGit.pull();
+    await simpleGit.pull();
   } else {
     await simpleGit.clone(csRepo, tmpLocationOfGitoRepo);
   }
