@@ -134,7 +134,7 @@ async function installDepsOnModules() {
 
     modules.forEach(mod => {
       console.log("Installing", path.join("./src/modules", mod));
-      fsExtra.copySync(path.join(tmpLocationOfGitoRepoModules, mod), path.join("./src/modules", mod));
+      fsExtra.copySync(path.join(tmpLocationOfGitoRepoModules, "modules", mod), path.join("./src/modules", mod));
     });
 
     console.log("\nLooking for dependencies, and installing ...\n");
