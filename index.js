@@ -22,7 +22,7 @@ const scripts = {
 };
 
 
-const tmpLocationOfGitoRepo = path.join(os.tmpdir(), "chillisaucefrontmodules");
+const tmpLocationOfGitoRepoModules = path.join(os.tmpdir(), "chillisaucefrontmodules");
 
 const cfmGit = "git@github.com:BlueChilli/ChilliSource.Front.Modules.git";
 //const currentDir = process.cwd();
@@ -37,17 +37,17 @@ const mkDir = (dir) => {
 
 async function getSelectedModules(csRepo) {
   const dirs = p => fs.readdirSync(p).filter(f => fs.statSync(path.join(p, f)).isDirectory()).filter(f => !f.startsWith("."));
-  mkDir(tmpLocationOfGitoRepo);
-  const simpleGit = require('simple-git/promise')(tmpLocationOfGitoRepo);
+  mkDir(tmpLocationOfGitoRepoModules);
+  const simpleGit = require('simple-git/promise')(tmpLocationOfGitoRepoModules);
   const isRepo = await simpleGit.checkIsRepo();
   spinner.start();
   if (isRepo) {
     await simpleGit.pull();
   } else {
-    await simpleGit.clone(csRepo, tmpLocationOfGitoRepo);
+    await simpleGit.clone(csRepo, tmpLocationOfGitoRepoModules);
   }
   spinner.stop();
-  const frontEndModules = await dirs(tmpLocationOfGitoRepo);
+  const frontEndModules = await dirs(tmpLocationOfGitoRepoModules + "/modules");
 
   const selected = await inquirer.prompt([
     {
@@ -134,7 +134,7 @@ async function installDepsOnModules() {
 
     modules.forEach(mod => {
       console.log("Installing", path.join("./src/modules", mod));
-      fsExtra.copySync(path.join(tmpLocationOfGitoRepo, mod), path.join("./src/modules", mod));
+      fsExtra.copySync(path.join(tmpLocationOfGitoRepoModules, mod), path.join("./src/modules", mod));
     });
 
     console.log("\nLooking for dependencies, and installing ...\n");
@@ -143,7 +143,7 @@ async function installDepsOnModules() {
     console.log("\nyarn add", deps, "\n");
     depArray.unshift("add");
 
-    const testT =  await execa('yarn', depArray);
+    const testT = await execa('yarn', depArray);
     console.log(testT.stdout);
 
   } else {
