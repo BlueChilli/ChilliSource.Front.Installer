@@ -1,7 +1,7 @@
 {
   "name": "chillifront-install",
   "version": "1.0.0",
-  "description": "Installer for ChilliFront",
+  "description": "ChilliFront Installer",
   "main": "index.js",
   "license": "MIT",
   "dependencies": {
