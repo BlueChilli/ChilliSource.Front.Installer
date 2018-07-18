@@ -114,7 +114,7 @@ async function getUserSelectedModules(repositoryUrl, gitRepoLocation) {
  * @param {string} gitRepoLocation The location on the local machine where to install
  */
 async function installModulesAndTheirDependencies(repositoryUrl, gitRepoLocation) {
-	if (fs.existsSync('node_modules') && fs.existsSync('src')) {
+	if (fs.existsSync('node_modules')) {
 		// Get user selected modules
 		const modules = await getUserSelectedModules(repositoryUrl, gitRepoLocation);
 		console.log(modules);
