@@ -177,7 +177,7 @@ async function createReactAppWithChilliSourceFrontEndAt(templateDirectory, desti
 	console.log('\n---- Installing ChilliSource.Front.Core');
 	const installCSFrontCore = await execa('yarn', [
 		'add',
-		'git+ssh://git@github.com:BlueChilli/ChilliSource.Front.git',
+		'chillifront',
 	]);
 	console.log(`\n-------- ${installCSFrontCore.stdout}`);
 
