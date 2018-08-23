@@ -5,7 +5,7 @@ import chillifront from 'chillifront';
 import Entry from './Entry';
 
 /** Helpers */
-import configureStore from './store';
+import configureStore from '../store';
 
 /** App */
 const App = chillifront(
