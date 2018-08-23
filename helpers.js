@@ -1,26 +1,27 @@
 /** Libraries */
-const fs = require('fs');
 const fsExtra = require('fs-extra');
 const path = require('path');
 const gitPromise = require('simple-git/promise');
 const Spinner = require('cli-spinner').Spinner;
 const inquirer = require('inquirer');
 const execa = require('execa');
+const chalk = require('chalk');
+const name = require('./package.json').name;
 
 /** Constants */
 const { prettier, scripts } = require('./constants');
 
 /** Initialisation */
 const spinner = new Spinner('%s');
-spinner.setSpinnerString('|/-\\');
+spinner.setSpinnerString(`${chalk.yellow('|/-\\')}`);
 
 /**
  *
  * @param {string} path The path at which to create a new directory
  */
 const generateDirectory = directoryPath => {
-	if (!fs.existsSync(directoryPath)) {
-		fs.mkdirSync(directoryPath);
+	if (!fsExtra.existsSync(directoryPath)) {
+		fsExtra.mkdirSync(directoryPath);
 	}
 };
 
@@ -29,10 +30,10 @@ const generateDirectory = directoryPath => {
  * @param {string} rootPath
  */
 const getDirectories = rootPath =>
-	fs
+	fsExtra
 		.readdirSync(rootPath)
 		.filter(directoryPath => {
-			if (fs.statSync(path.join(rootPath, directoryPath)).isDirectory()) {
+			if (fsExtra.statSync(path.join(rootPath, directoryPath)).isDirectory()) {
 				return true;
 			}
 
@@ -56,11 +57,11 @@ const getPackagesFileList = (directory, fileList) => {
 		directory = directory.concat('/');
 	}
 
-	const files = fs.readdirSync(directory);
+	const files = fsExtra.readdirSync(directory);
 	let newFileList = fileList || [];
 
 	files.forEach(file => {
-		if (fs.statSync(directory + file).isDirectory()) {
+		if (fsExtra.statSync(directory + file).isDirectory()) {
 			newFileList = getPackagesFileList(directory + file + '/', newFileList);
 		} else {
 			newFileList.push(directory + file);
@@ -75,6 +76,9 @@ const getPackagesFileList = (directory, fileList) => {
  * @param {string} gitRepoLocation The path to where to copy contents from
  */
 const installStyleHelpers = gitRepoLocation => {
+	console.log('');
+	console.log(`Installing ${chalk.green('Styling Helpers')}`);
+
 	// Make a directory for style-helpers
 	generateDirectory('./src/style-helpers');
 
@@ -92,13 +96,12 @@ const installStyleHelpers = gitRepoLocation => {
 async function installUserSelectedModules(gitRepoLocation) {
 	// Make a directory for modules
 	generateDirectory('./src/modules');
-
-	// Stop spinner
-	spinner.stop();
-
+	console.log('');
 	// Deal with CS.Front.Modules
+	console.log(`${chalk.yellow('Time to select your modules. Fetching the latest list...')}`);
 	const chilliSourceFrontModuleList = await getDirectories(gitRepoLocation + '/modules');
 
+	console.log('');
 	const userSelection = await inquirer.prompt([
 		{
 			message: 'Select modules to import',
@@ -110,30 +113,50 @@ async function installUserSelectedModules(gitRepoLocation) {
 
 	// Get user selected modules
 	const modules = userSelection['userSelectedModules'];
-	console.log(modules);
 
 	if (modules.length > 0) {
+		console.log('');
+		console.log(`You've ${chalk.green('selected')} the following modules:`);
+		modules.forEach(module => {
+			console.log(`- ${chalk.cyan(module)}`);
+		});
+
 		// Make directory
 		generateDirectory('./src/modules');
 
 		// Install each module selected by user
+		console.log();
+		console.log(`Installing modules:`);
+		console.log();
 		modules.forEach(module => {
-			console.log('Installing ', path.join('./src/modules', module));
-
 			fsExtra.copySync(
 				path.join(gitRepoLocation, 'modules', module),
 				path.join('./src/modules', module)
 			);
+
+			console.log(`-${chalk.bold.cyan(module)} : Done`);
 		});
 
 		// Install dependencies
-		console.log('\n\nLooking for dependencies...');
+		console.log();
+		console.log(`Installing dependencies for selected modules...`);
+		console.log();
 		const dependencyList = getDependenciesForPackages('./src/modules');
 
-		console.log('\n\nInstalling dependencies...');
 		dependencyList.unshift('add');
 		const installStatus = await execa('yarn', dependencyList);
-		console.log(`\n\n${installStatus.stdout}`);
+		console.log(`${chalk.green(installStatus.stdout)}`);
+	} else {
+		console.log();
+		console.log(
+			`You ${chalk.bold.red(
+				"haven't"
+			)} installed any modules at this time. You can do so later by running the following command:`
+		);
+		console.log();
+		console.log(`${chalk.cyan(`npx ${name} --modules`)}`);
+		console.log();
+		console.log('Happy coding!');
 	}
 }
 
@@ -143,8 +166,7 @@ async function installUserSelectedModules(gitRepoLocation) {
  * @param {string} gitRepoLocation The location on the local machine where to install
  */
 async function installModulesAndTheirDependencies(repositoryUrl, gitRepoLocation) {
-	console.log(repositoryUrl, gitRepoLocation);
-	if (fs.existsSync('node_modules')) {
+	if (fsExtra.existsSync('node_modules')) {
 		// Start spinner
 		spinner.start();
 
@@ -159,20 +181,34 @@ async function installModulesAndTheirDependencies(repositoryUrl, gitRepoLocation
 			await gitRepo.clone(repositoryUrl, gitRepoLocation);
 		}
 
+		spinner.stop();
+
 		// Copy styles & modules
 		installStyleHelpers(gitRepoLocation).then(data => installUserSelectedModules(gitRepoLocation));
 	} else {
-		console.log("\n\nThis does not look like a 'create-react-app' project");
+		console.log(
+			`The current directory does not look like a ${chalk.bold.red('create-react-app')} project.`
+		);
+		console.log('You can start over by deleting this directory and running the following command:');
+		console.log();
+		console.log(`${chalk.cyan(`npx ${name} <project-directory>`)}`);
+		process.exit(1);
 	}
 }
 
+/**
+ *
+ * @param {*} moduleDirectory
+ *
+ * @returns {[]}
+ */
 const getDependenciesForPackages = moduleDirectory => {
 	const fileList = getPackagesFileList(moduleDirectory);
 	const packageLocations = fileList.filter(fileLocation => fileLocation.endsWith('.packages'));
 
 	const filteredLocations = packageLocations
 		.map(packageLocation => {
-			return fs.readFileSync(packageLocation, 'utf8').split(/[\r\n]+/);
+			return fsExtra.readFileSync(packageLocation, 'utf8').split(/[\r\n]+/);
 		})
 		.reduce((reduction, dependency) => {
 			return reduction.concat(dependency);
@@ -218,7 +254,10 @@ async function createReactAppWithChilliSourceFrontEndAt(templateDirectory, desti
 		...existingPackageJSON.devDependencies,
 		'env-cmd': '^8.0.2',
 	};
-	fs.writeFileSync(destinationDirectory + '/package.json', JSON.stringify(existingPackageJSON));
+	fsExtra.writeFileSync(
+		destinationDirectory + '/package.json',
+		JSON.stringify(existingPackageJSON)
+	);
 
 	// Install node-sass-chokidar
 	const installNodeSass = await execa('yarn', ['add', 'npm-run-all', 'node-sass-chokidar', '-D']);
