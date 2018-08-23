@@ -72,25 +72,28 @@ const getPackagesFileList = (directory, fileList) => {
 
 /**
  *
- * @param {string} repositoryUrl The URL of the repository where to fetch from
+ * @param {string} gitRepoLocation The path to where to copy contents from
  */
-async function getUserSelectedModules(repositoryUrl, gitRepoLocation) {
+const installStyleHelpers = gitRepoLocation => {
+	// Make a directory for style-helpers
+	generateDirectory('./src/style-helpers');
+
+	// Copy directory to destination
+	return fsExtra.copy(
+		path.join(gitRepoLocation, 'style-helpers'),
+		path.join('./src/style-helpers')
+	);
+};
+
+/**
+ *
+ * @param {string} gitRepoLocation The path to where to copy contents from
+ */
+async function installUserSelectedModules(gitRepoLocation) {
 	// Make a directory for modules
-	generateDirectory(gitRepoLocation);
+	generateDirectory('./src/modules');
 
-	// Check if directory is a repo or not
-	const gitRepo = gitPromise(gitRepoLocation);
-	const directoryIsRepository = await gitRepo.checkIsRepo();
-
-	// Put Git Repo contents into the local gitRepo directory
-	spinner.start();
-
-	if (directoryIsRepository) {
-		await gitRepo.pull();
-	} else {
-		await gitRepo.clone(repositoryUrl, gitRepoLocation);
-	}
-
+	// Stop spinner
 	spinner.stop();
 
 	// Deal with CS.Front.Modules
@@ -105,20 +108,11 @@ async function getUserSelectedModules(repositoryUrl, gitRepoLocation) {
 		},
 	]);
 
-	return userSelection['userSelectedModules'];
-}
+	// Get user selected modules
+	const modules = userSelection['userSelectedModules'];
+	console.log(modules);
 
-/**
- *
- * @param {string} repositoryUrl The URL of the repository
- * @param {string} gitRepoLocation The location on the local machine where to install
- */
-async function installModulesAndTheirDependencies(repositoryUrl, gitRepoLocation) {
-	if (fs.existsSync('node_modules')) {
-		// Get user selected modules
-		const modules = await getUserSelectedModules(repositoryUrl, gitRepoLocation);
-		console.log(modules);
-
+	if (modules.length > 0) {
 		// Make directory
 		generateDirectory('./src/modules');
 
@@ -140,6 +134,33 @@ async function installModulesAndTheirDependencies(repositoryUrl, gitRepoLocation
 		dependencyList.unshift('add');
 		const installStatus = await execa('yarn', dependencyList);
 		console.log(`\n\n${installStatus.stdout}`);
+	}
+}
+
+/**
+ *
+ * @param {string} repositoryUrl The URL of the repository
+ * @param {string} gitRepoLocation The location on the local machine where to install
+ */
+async function installModulesAndTheirDependencies(repositoryUrl, gitRepoLocation) {
+	console.log(repositoryUrl, gitRepoLocation);
+	if (fs.existsSync('node_modules')) {
+		// Start spinner
+		spinner.start();
+
+		// Check if directory is a repo or not
+		const gitRepo = gitPromise(gitRepoLocation);
+		const directoryIsRepository = await gitRepo.checkIsRepo();
+
+		// Put Git Repo contents into the local gitRepo directory
+		if (directoryIsRepository) {
+			await gitRepo.pull();
+		} else {
+			await gitRepo.clone(repositoryUrl, gitRepoLocation);
+		}
+
+		// Copy styles & modules
+		installStyleHelpers(gitRepoLocation).then(data => installUserSelectedModules(gitRepoLocation));
 	} else {
 		console.log("\n\nThis does not look like a 'create-react-app' project");
 	}
@@ -175,11 +196,16 @@ async function createReactAppWithChilliSourceFrontEndAt(templateDirectory, desti
 
 	// Install CS.Front.Core
 	console.log('\n---- Installing ChilliSource.Front.Core');
-	const installCSFrontCore = await execa('yarn', [
-		'add',
-		'chillifront',
-	]);
+	const installCSFrontCore = await execa('yarn', ['add', 'chillifront']);
 	console.log(`\n-------- ${installCSFrontCore.stdout}`);
+
+	// Clear the contents of the 'src' directory before copying our stuff in
+	fsExtra.removeSync('./src/App.css');
+	fsExtra.removeSync('./src/App.js');
+	fsExtra.removeSync('./src/App.test.js');
+	fsExtra.removeSync('./src/index.css');
+	fsExtra.removeSync('./src/logo.svg');
+	fsExtra.removeSync('./src/registerServiceWorker.js');
 
 	// Copy template directory to new app
 	fsExtra.copySync(templateDirectory, destinationDirectory);
