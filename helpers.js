@@ -115,6 +115,9 @@ async function getUserSelectedModules(repositoryUrl, gitRepoLocation) {
  */
 async function installModulesAndTheirDependencies(repositoryUrl, gitRepoLocation) {
 	if (fs.existsSync('node_modules')) {
+		// Copy styles
+		await installStyleHelpers(repositoryUrl);
+
 		// Get user selected modules
 		const modules = await getUserSelectedModules(repositoryUrl, gitRepoLocation);
 		console.log(modules);
@@ -143,6 +146,18 @@ async function installModulesAndTheirDependencies(repositoryUrl, gitRepoLocation
 	} else {
 		console.log("\n\nThis does not look like a 'create-react-app' project");
 	}
+}
+
+/**
+ *
+ * @param {string} repositoryUrl The URL of the repository
+ */
+async function installStyleHelpers(repositoryUrl) {
+	// Generate directory at destination
+	generateDirectory('./src/style-helpers');
+
+	// Copy directory to destination
+	fsExtra.copySync(path.join(repositoryUrl, 'style-helpers'), path.join('./src/style-helpers'));
 }
 
 const getDependenciesForPackages = moduleDirectory => {
@@ -175,10 +190,7 @@ async function createReactAppWithChilliSourceFrontEndAt(templateDirectory, desti
 
 	// Install CS.Front.Core
 	console.log('\n---- Installing ChilliSource.Front.Core');
-	const installCSFrontCore = await execa('yarn', [
-		'add',
-		'chillifront',
-	]);
+	const installCSFrontCore = await execa('yarn', ['add', 'chillifront']);
 	console.log(`\n-------- ${installCSFrontCore.stdout}`);
 
 	// Copy template directory to new app
