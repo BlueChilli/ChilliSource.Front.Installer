@@ -1,17 +1,23 @@
-import React, {Fragment} from 'react'
-import {Switch, Route} from "react-router";
-import Home from "./Home/Home";
+/** Libraries */
+import React from 'react';
+import { Switch, Route } from 'react-router-dom';
 
-export default class Entry extends React.Component {
-  render() {
-    return (
-      <Fragment>
-        <nav>NavBar Goes Here</nav>
-        <Switch>
-          <Route exact path="/" component={Home}/>
-          {this.props.routes}
-        </Switch>
-      </Fragment>
-    )
-  }
+/** Components */
+import Home from '../components/Home';
+
+/** Entry */
+class Entry extends React.Component {
+	render() {
+		return (
+			<React.Fragment>
+				<nav>NavBar Goes Here</nav>
+				<Switch>
+					<Route exact path="/" component={Home} />
+					{/* Add additional routes here */}
+				</Switch>
+			</React.Fragment>
+		);
+	}
 }
+
+export default Entry;
