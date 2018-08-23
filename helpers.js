@@ -118,45 +118,62 @@ async function installUserSelectedModules(gitRepoLocation) {
 		console.log('');
 		console.log(`You've ${chalk.green('selected')} the following modules:`);
 		modules.forEach(module => {
-			console.log(`- ${chalk.cyan(module)}`);
+			console.log(`--- ${chalk.cyan(module)}`);
 		});
 
 		// Make directory
 		generateDirectory('./src/modules');
 
 		// Install each module selected by user
-		console.log();
+		console.log('');
 		console.log(`Installing modules:`);
-		console.log();
 		modules.forEach(module => {
 			fsExtra.copySync(
 				path.join(gitRepoLocation, 'modules', module),
 				path.join('./src/modules', module)
 			);
 
-			console.log(`-${chalk.bold.cyan(module)} : Done`);
+			console.log(`--- ${chalk.bold.cyan(module)} : Done`);
 		});
 
 		// Install dependencies
-		console.log();
+		console.log('');
 		console.log(`Installing dependencies for selected modules...`);
-		console.log();
+		console.log('');
 		const dependencyList = getDependenciesForPackages('./src/modules');
 
 		dependencyList.unshift('add');
 		const installStatus = await execa('yarn', dependencyList);
-		console.log(`${chalk.green(installStatus.stdout)}`);
+		console.log(`--- ${installStatus.stdout}`);
+		console.log('');
+		console.log(`${chalk.cyan(`npx ${name} --modules`)}`);
+		console.log('');
+		console.log('Happy coding!');
+		console.log('|‾‾‾‾‾‾‾‾‾‾‾‾|');
+		console.log('| BLUECHILLI |');
+		console.log('|____________|');
+		console.log('(__/) || ');
+		console.log('(•ㅅ•) || ');
+		console.log('/ 　 づ');
+		console.log('');
 	} else {
-		console.log();
+		console.log('');
 		console.log(
 			`You ${chalk.bold.red(
 				"haven't"
 			)} installed any modules at this time. You can do so later by running the following command:`
 		);
-		console.log();
+		console.log('');
 		console.log(`${chalk.cyan(`npx ${name} --modules`)}`);
-		console.log();
+		console.log('');
 		console.log('Happy coding!');
+		console.log('|‾‾‾‾‾‾‾‾‾‾‾‾|');
+		console.log('| BLUECHILLI |');
+		console.log('|____________|');
+		console.log('(__/) || ');
+		console.log('(•ㅅ•) || ');
+		console.log('/ 　 づ');
+		console.log('');
 	}
 }
 
@@ -222,7 +239,7 @@ const getDependenciesForPackages = moduleDirectory => {
 };
 
 async function createReactAppWithChilliSourceFrontEndAt(templateDirectory, destinationDirectory) {
-	console.log('\n\nRunning create-react-app. Please wait...\n');
+	console.log(`Running ${chalk.bold.cyan('create-react-app')}. Please wait...`);
 
 	// Run npx script at the target location
 	execa.sync('npx', ['create-react-app', destinationDirectory]);
@@ -231,9 +248,10 @@ async function createReactAppWithChilliSourceFrontEndAt(templateDirectory, desti
 	process.chdir(destinationDirectory);
 
 	// Install CS.Front.Core
-	console.log('\n---- Installing ChilliSource.Front.Core');
+	console.log('');
+	console.log(`Installing ${chalk.bold.cyan('CS.Front.Core')}`);
 	const installCSFrontCore = await execa('yarn', ['add', 'chillifront']);
-	console.log(`\n-------- ${installCSFrontCore.stdout}`);
+	console.log(`--- ${installCSFrontCore.stdout}`);
 
 	// Clear the contents of the 'src' directory before copying our stuff in
 	fsExtra.removeSync('./src/App.css');
@@ -260,8 +278,10 @@ async function createReactAppWithChilliSourceFrontEndAt(templateDirectory, desti
 	);
 
 	// Install node-sass-chokidar
+	console.log('');
+	console.log(`Installing ${chalk.bold.cyan('SASS')}`);
 	const installNodeSass = await execa('yarn', ['add', 'npm-run-all', 'node-sass-chokidar', '-D']);
-	console.log(`\n\n ${installNodeSass.stdout}`);
+	console.log(`--- ${installNodeSass.stdout}`);
 }
 
 module.exports = {
