@@ -1,6 +1,6 @@
 {
 	"name": "bc-starter-template",
-	"version": "1.1.0",
+	"version": "1.1.1",
 	"description": "A bootstrapped self-contained starter project for BlueChilli Web projects",
 	"main": "index.js",
 	"license": "MIT",
