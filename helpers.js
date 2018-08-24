@@ -119,6 +119,9 @@ async function temporarilyCloneGitRepo(repositoryUrl, gitRepoLocation) {
 	// Start spinner
 	spinner.start();
 
+	// Check temp directory exists
+	generateDirectory(gitRepoLocation);
+
 	// Check if directory is a repo or not
 	const gitRepo = gitPromise(gitRepoLocation);
 	const directoryIsRepository = await gitRepo.checkIsRepo();
