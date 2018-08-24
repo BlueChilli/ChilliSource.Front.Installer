@@ -12,6 +12,8 @@ const {
 	createReactAppWithChilliSourceFrontEndAt,
 	installModulesAndTheirDependencies,
 	generateDirectory,
+	installStyleHelpers,
+	temporarilyCloneGitRepo,
 } = require('./helpers');
 
 /** Variables */
@@ -20,8 +22,13 @@ let targetDirectory;
 /** Feed the command into the Commander */
 const program = new commander.Command(packageJson.name)
 	.version(packageJson.version)
+	.description(
+		'A simple command line utility to generate a ready-to-run ChilliFront React App(CRA)'
+	)
 	.arguments('<project-directory>')
 	.usage(`${chalk.green('<project-directory>')}`)
+	.option('-m, --only-modules', 'Install modules only')
+	.option('-s, --only-styles', 'Install style-helpers only')
 	.action(projectDirectory => {
 		targetDirectory = projectDirectory;
 	})
@@ -45,17 +52,42 @@ if (typeof targetDirectory === 'undefined') {
 // Generate directory, if not there
 generateDirectory(targetDirectory);
 
-// Inform the user
-console.log('');
-console.log(`Creating a new ChilliFront React app in ${chalk.green(targetDirectory)}.`);
-console.log('');
+/** Constants */
+const CSFrontModulesUrl = 'git@github.com:BlueChilli/ChilliSource.Front.Modules.git';
+const tempLocationOfGitRepoModules = path.join(os.tmpdir(), 'pashisajedi');
 
-// Start the process
-createReactAppWithChilliSourceFrontEndAt(
-	path.join(__dirname, 'templates'),
-	path.resolve(targetDirectory)
-).then(data => {
-	const tempLocationOfGitRepoModules = path.join(os.tmpdir(), 'pashisajedi');
-	const CSFrontModulesUrl = 'git@github.com:BlueChilli/ChilliSource.Front.Modules.git';
-	installModulesAndTheirDependencies(CSFrontModulesUrl, tempLocationOfGitRepoModules);
-});
+const installModules = () =>
+	installModulesAndTheirDependencies(targetDirectory, tempLocationOfGitRepoModules);
+
+const installStyles = () => installStyleHelpers(targetDirectory, tempLocationOfGitRepoModules);
+
+const cloneRepo = () => temporarilyCloneGitRepo(CSFrontModulesUrl, tempLocationOfGitRepoModules);
+
+/** If modules flag provided, install modules */
+if (program.onlyModules) {
+	cloneRepo().then(installModules);
+}
+
+/** If styles flag provided, install styles */
+if (program.onlyStyles) {
+	cloneRepo().then(installStyles);
+}
+
+/** If no flag, then create a starter app */
+if (!program.onlyModules && !program.onlyStyles) {
+	// Inform the user
+	console.log('');
+	console.log(
+		`Creating a new ChilliFront React App(CRA) in ${chalk.bold.greenBright(targetDirectory)}.`
+	);
+	console.log('');
+
+	// Start the process
+	createReactAppWithChilliSourceFrontEndAt(
+		path.join(__dirname, 'templates'),
+		path.resolve(targetDirectory)
+	)
+		.then(cloneRepo)
+		.then(installStyles)
+		.then(installModules);
+}

@@ -72,22 +72,67 @@ const getPackagesFileList = (directory, fileList) => {
 };
 
 /**
- *
+ * Copies the 'style-helpers' folder over from
+ * CS.Front.Modules to the target directory
+ * @param {string} destinationDirectory The target directory where to install the modules
  * @param {string} gitRepoLocation The path to where to copy contents from
+ *
+ * @returns {Promise} A promise
  */
-const installStyleHelpers = gitRepoLocation => {
+const installStyleHelpers = (destinationDirectory, gitRepoLocation) => {
 	console.log('');
-	console.log(`Installing ${chalk.green('Styling Helpers')}`);
+	console.log(`Installing ${chalk.bold.greenBright('Styling Helpers')}`);
 
-	// Make a directory for style-helpers
-	generateDirectory('./src/style-helpers');
+	// Ensure the process is running in the correct directory
+	if (!process.cwd().includes(destinationDirectory)) {
+		process.chdir(destinationDirectory);
+	}
 
-	// Copy directory to destination
-	return fsExtra.copy(
-		path.join(gitRepoLocation, 'style-helpers'),
-		path.join('./src/style-helpers')
-	);
+	// Only install if base CRA & ChilliFront App has been setup
+	if (fsExtra.existsSync('node_modules')) {
+		// Make a directory for style-helpers
+		generateDirectory('./src/style-helpers');
+
+		// Copy directory to destination
+		return fsExtra.copy(
+			path.join(gitRepoLocation, 'style-helpers'),
+			path.join('./src/style-helpers')
+		);
+	} else {
+		console.log(
+			`The current directory does not look like a ${chalk.bold.red('create-react-app')} project.`
+		);
+		console.log('You can start over by deleting this directory and running the following command:');
+		console.log();
+		console.log(`${chalk.cyan(`npx ${name} <project-directory>`)}`);
+		process.exit(1);
+	}
 };
+
+/**
+ * Temporarily clones the repo if not existing in the temp directory
+ * or if it does exist, then just does a pull and updates it.
+ * @param {string} repositoryUrl The URL of the repository
+ * @param {string} gitRepoLocation The location on the local machine where to install
+ */
+async function temporarilyCloneGitRepo(repositoryUrl, gitRepoLocation) {
+	// Start spinner
+	spinner.start();
+
+	// Check if directory is a repo or not
+	const gitRepo = gitPromise(gitRepoLocation);
+	const directoryIsRepository = await gitRepo.checkIsRepo();
+
+	// Put Git Repo contents into the local gitRepo directory
+	if (directoryIsRepository) {
+		await gitRepo.pull();
+	} else {
+		await gitRepo.clone(repositoryUrl, gitRepoLocation);
+	}
+
+	// Stop spinner
+	spinner.stop();
+}
 
 /**
  *
@@ -178,30 +223,21 @@ async function installUserSelectedModules(gitRepoLocation) {
 }
 
 /**
- *
- * @param {string} repositoryUrl The URL of the repository
+ * Shows the user a prompt with all available modules and then installs the modules
+ * which the user has selected.
+ * @param {string} destinationDirectory The target directory where to install the modules
  * @param {string} gitRepoLocation The location on the local machine where to install
  */
-async function installModulesAndTheirDependencies(repositoryUrl, gitRepoLocation) {
+async function installModulesAndTheirDependencies(destinationDirectory, gitRepoLocation) {
+	// Ensure the process is running in the correct directory
+	if (!process.cwd().includes(destinationDirectory)) {
+		process.chdir(destinationDirectory);
+	}
+
+	// Only install if base CRA & ChilliFront App has been setup
 	if (fsExtra.existsSync('node_modules')) {
-		// Start spinner
-		spinner.start();
-
-		// Check if directory is a repo or not
-		const gitRepo = gitPromise(gitRepoLocation);
-		const directoryIsRepository = await gitRepo.checkIsRepo();
-
-		// Put Git Repo contents into the local gitRepo directory
-		if (directoryIsRepository) {
-			await gitRepo.pull();
-		} else {
-			await gitRepo.clone(repositoryUrl, gitRepoLocation);
-		}
-
-		spinner.stop();
-
 		// Copy styles & modules
-		installStyleHelpers(gitRepoLocation).then(data => installUserSelectedModules(gitRepoLocation));
+		installUserSelectedModules(gitRepoLocation);
 	} else {
 		console.log(
 			`The current directory does not look like a ${chalk.bold.red('create-react-app')} project.`
@@ -214,10 +250,12 @@ async function installModulesAndTheirDependencies(repositoryUrl, gitRepoLocation
 }
 
 /**
- *
+ * Goes recursively through all the directory root provided
+ * and all its children to generate a list of all the dependencies
+ * via their '.packages' file.
  * @param {*} moduleDirectory
  *
- * @returns {[]}
+ * @returns {string[]}
  */
 const getDependenciesForPackages = moduleDirectory => {
 	const fileList = getPackagesFileList(moduleDirectory);
@@ -244,8 +282,10 @@ async function createReactAppWithChilliSourceFrontEndAt(templateDirectory, desti
 	// Run npx script at the target location
 	execa.sync('npx', ['create-react-app', destinationDirectory]);
 
-	// Change context to the target location
-	process.chdir(destinationDirectory);
+	// Change context to the target location, if not already
+	if (!process.cwd().includes(destinationDirectory)) {
+		process.chdir(destinationDirectory);
+	}
 
 	// Install CS.Front.Core
 	console.log('');
@@ -288,4 +328,6 @@ module.exports = {
 	createReactAppWithChilliSourceFrontEndAt,
 	installModulesAndTheirDependencies,
 	generateDirectory,
+	installStyleHelpers,
+	temporarilyCloneGitRepo,
 };
