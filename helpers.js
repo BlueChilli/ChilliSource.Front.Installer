@@ -84,8 +84,9 @@ const installStyleHelpers = (destinationDirectory, gitRepoLocation) => {
 	console.log(`Installing ${chalk.bold.greenBright('Styling Helpers')}`);
 
 	// Ensure the process is running in the correct directory
-	if (!process.cwd().includes(destinationDirectory)) {
-		process.chdir(destinationDirectory);
+	const formattedDestinationDirectory = destinationDirectory.slice(2);
+	if (!process.cwd().includes(formattedDestinationDirectory)) {
+		process.chdir(formattedDestinationDirectory);
 	}
 
 	// Only install if base CRA & ChilliFront App has been setup
@@ -130,6 +131,7 @@ async function temporarilyCloneGitRepo(repositoryUrl, gitRepoLocation) {
 	if (directoryIsRepository) {
 		await gitRepo.pull();
 	} else {
+		fsExtra.emptyDirSync(gitRepoLocation);
 		await gitRepo.clone(repositoryUrl, gitRepoLocation);
 	}
 
@@ -233,8 +235,9 @@ async function installUserSelectedModules(gitRepoLocation) {
  */
 async function installModulesAndTheirDependencies(destinationDirectory, gitRepoLocation) {
 	// Ensure the process is running in the correct directory
-	if (!process.cwd().includes(destinationDirectory)) {
-		process.chdir(destinationDirectory);
+	const formattedDestinationDirectory = destinationDirectory.slice(2);
+	if (!process.cwd().includes(formattedDestinationDirectory)) {
+		process.chdir(formattedDestinationDirectory);
 	}
 
 	// Only install if base CRA & ChilliFront App has been setup
