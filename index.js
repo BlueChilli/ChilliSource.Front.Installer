@@ -84,7 +84,7 @@ if (program.onlyStyles) {
 }
 
 /** If no flag, then create a starter app */
-if (!program.onlyModules && !program.onlyStyles) {
+if (!program.onlyModules && !program.onlyStyles && !program.onlyComponents) {
 	// Inform the user
 	console.log('');
 	console.log(
@@ -99,5 +99,6 @@ if (!program.onlyModules && !program.onlyStyles) {
 	)
 		.then(cloneRepo)
 		.then(installStyles)
-		.then(installModules);
+		.then(installModules)
+		.then(installComponents);
 }

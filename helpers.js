@@ -247,7 +247,7 @@ async function installModulesAndTheirDependencies(destinationDirectory, gitRepoL
 	// Only install if base CRA & ChilliFront App has been setup
 	if (fsExtra.existsSync('node_modules')) {
 		// Copy styles & modules
-		installUserSelectedModules(gitRepoLocation);
+		return installUserSelectedModules(gitRepoLocation);
 	} else {
 		console.log(
 			`The current directory does not look like a ${chalk.bold.red('create-react-app')} project.`
