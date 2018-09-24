@@ -1,24 +1,23 @@
-# Bluechilli ChilliFront Installer
+# ChilliSource.Front.Installer
 
-This is the auto-installer script for [Bluechilli's](https://github.com/BlueChilli) Front-end platform.
+A CLI script to create a new project using BlueChilli's Front-end Framework or to use one or more parts of the aforesaid framework.
 
-## How to use
+## Usage
+
+The script is pretty self explanatory on execution. Every single time when the command requires input from the user, it will prompt. So, you can even start using it without having to read the rest of this page :smirk:
 
 ```shell
 npx bc-starter-template <project-directory>
 ```
 
-You'll be prompted to select modules and off you go from there!
-
 ## Flags
 
-There two flags available for you to use. You can use them together too if you like.
+There three flags available for you to use. You can use them together too if you like:
 
-- `-m` or `--only-modules` : This shows a prompt to the user select modules and install them and their dependencies
-- `-s` or `--only-styles` : This installs the latest version of style helpers to the target directory
+| Name       | Short | Long                | Description                                                                               |
+| ---------- | ----- | ------------------- | ----------------------------------------------------------------------------------------- |
+| Modules    | `-m`  | `--only-modules`    | This shows a prompt to the user select modules and install them and their dependencies    |
+| Components | `-c`  | `--only-components` | This shows a prompt to the user select components and install them and their dependencies |
+| Styles     | `-s`  | `--only-styles`     | This installs the latest version of style helpers to the target directory                 |
 
-As usual, you can use `npx bc-starter-template --help` for help directly in the terminal
-
-## Documentation
-
-You can read the detailed documentation for components and modules on [CS.Front.Modules](https://bluechilli.github.io/ChilliSource.Front.Modules/).
+Of course you can use `npx bc-starter-template --help` or `npx bc-starter-template -h` for help directly in the your terminal.
