@@ -14,6 +14,7 @@ const {
 	generateDirectory,
 	installStyleHelpers,
 	temporarilyCloneGitRepo,
+	installComponentsAndTheirDependencies,
 } = require('./helpers');
 
 /** Variables */
@@ -29,6 +30,7 @@ const program = new commander.Command(packageJson.name)
 	.usage(`${chalk.green('<project-directory>')}`)
 	.option('-m, --only-modules', 'Install modules only')
 	.option('-s, --only-styles', 'Install style-helpers only')
+	.option('-c, --only-components', 'Install components only')
 	.action(projectDirectory => {
 		targetDirectory = projectDirectory;
 	})
@@ -61,11 +63,19 @@ const installModules = () =>
 
 const installStyles = () => installStyleHelpers(targetDirectory, tempLocationOfGitRepoModules);
 
+const installComponents = () =>
+	installComponentsAndTheirDependencies(targetDirectory, tempLocationOfGitRepoModules);
+
 const cloneRepo = () => temporarilyCloneGitRepo(CSFrontModulesUrl, tempLocationOfGitRepoModules);
 
 /** If modules flag provided, install modules */
 if (program.onlyModules) {
 	cloneRepo().then(installModules);
+}
+
+/** If components flag provided, install components */
+if (program.onlyComponents) {
+	cloneRepo().then(installComponents);
 }
 
 /** If styles flag provided, install styles */
@@ -74,7 +84,7 @@ if (program.onlyStyles) {
 }
 
 /** If no flag, then create a starter app */
-if (!program.onlyModules && !program.onlyStyles) {
+if (!program.onlyModules && !program.onlyStyles && !program.onlyComponents) {
 	// Inform the user
 	console.log('');
 	console.log(
@@ -89,5 +99,6 @@ if (!program.onlyModules && !program.onlyStyles) {
 	)
 		.then(cloneRepo)
 		.then(installStyles)
-		.then(installModules);
+		.then(installModules)
+		.then(installComponents);
 }

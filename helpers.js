@@ -16,7 +16,8 @@ const spinner = new Spinner('%s');
 spinner.setSpinnerString(`${chalk.yellow('|/-\\')}`);
 
 /**
- *
+ * Creates a directory at the specified path
+ * if it doesn't exist
  * @param {string} path The path at which to create a new directory
  */
 const generateDirectory = directoryPath => {
@@ -26,11 +27,14 @@ const generateDirectory = directoryPath => {
 };
 
 /**
- *
+ * Retrieves all directories and sub-directories
+ * starting at the path provided.
  * @param {string} rootPath
+ *
+ * @returns {string[]}
  */
-const getDirectories = rootPath =>
-	fsExtra
+const getDirectories = rootPath => {
+	return fsExtra
 		.readdirSync(rootPath)
 		.filter(directoryPath => {
 			if (fsExtra.statSync(path.join(rootPath, directoryPath)).isDirectory()) {
@@ -46,11 +50,16 @@ const getDirectories = rootPath =>
 
 			return false;
 		});
+};
 
 /**
- *
+ * Iterates over the provided directory and its sub-
+ * directories, goes through each `.packages` file
+ * and compiles a list of `.packages` files
  * @param {*} directory
  * @param {*} fileList
+ *
+ * @returns {string[]}
  */
 const getPackagesFileList = (directory, fileList) => {
 	if (directory[directory.length - 1] !== '/') {
@@ -77,17 +86,14 @@ const getPackagesFileList = (directory, fileList) => {
  * @param {string} destinationDirectory The target directory where to install the modules
  * @param {string} gitRepoLocation The path to where to copy contents from
  *
- * @returns {Promise} A promise
+ * @returns {Promise}
  */
 const installStyleHelpers = (destinationDirectory, gitRepoLocation) => {
 	console.log('');
 	console.log(`Installing ${chalk.bold.greenBright('Styling Helpers')}`);
 
-	// Ensure the process is running in the correct directory
-	const formattedDestinationDirectory = destinationDirectory.slice(2);
-	if (!process.cwd().includes(formattedDestinationDirectory)) {
-		process.chdir(formattedDestinationDirectory);
-	}
+	// Change context to the target location, if not already
+	ensureProcessIsRunningInTheCorrectDirectory(destinationDirectory);
 
 	// Only install if base CRA & ChilliFront App has been setup
 	if (fsExtra.existsSync('node_modules')) {
@@ -140,7 +146,8 @@ async function temporarilyCloneGitRepo(repositoryUrl, gitRepoLocation) {
 }
 
 /**
- *
+ * Installs the `Mod`s selected by the user into
+ * the target directory
  * @param {string} gitRepoLocation The path to where to copy contents from
  */
 async function installUserSelectedModules(gitRepoLocation) {
@@ -196,7 +203,7 @@ async function installUserSelectedModules(gitRepoLocation) {
 		const installStatus = await execa('yarn', dependencyList);
 		console.log(`--- ${installStatus.stdout}`);
 		console.log('');
-		console.log(`${chalk.cyan(`npx ${name} --modules`)}`);
+		console.log(`${chalk.cyan(`npx ${name} --only-modules`)}`);
 		console.log('');
 		console.log('Happy coding!');
 		console.log('|‾‾‾‾‾‾‾‾‾‾‾‾|');
@@ -214,7 +221,7 @@ async function installUserSelectedModules(gitRepoLocation) {
 			)} installed any modules at this time. You can do so later by running the following command:`
 		);
 		console.log('');
-		console.log(`${chalk.cyan(`npx ${name} --modules`)}`);
+		console.log(`${chalk.cyan(`npx ${name} --only-modules`)}`);
 		console.log('');
 		console.log('Happy coding!');
 		console.log('|‾‾‾‾‾‾‾‾‾‾‾‾|');
@@ -234,16 +241,13 @@ async function installUserSelectedModules(gitRepoLocation) {
  * @param {string} gitRepoLocation The location on the local machine where to install
  */
 async function installModulesAndTheirDependencies(destinationDirectory, gitRepoLocation) {
-	// Ensure the process is running in the correct directory
-	const formattedDestinationDirectory = destinationDirectory.slice(2);
-	if (!process.cwd().includes(formattedDestinationDirectory)) {
-		process.chdir(formattedDestinationDirectory);
-	}
+	// Change context to the target location, if not already
+	ensureProcessIsRunningInTheCorrectDirectory(destinationDirectory);
 
 	// Only install if base CRA & ChilliFront App has been setup
 	if (fsExtra.existsSync('node_modules')) {
 		// Copy styles & modules
-		installUserSelectedModules(gitRepoLocation);
+		return installUserSelectedModules(gitRepoLocation);
 	} else {
 		console.log(
 			`The current directory does not look like a ${chalk.bold.red('create-react-app')} project.`
@@ -252,6 +256,117 @@ async function installModulesAndTheirDependencies(destinationDirectory, gitRepoL
 		console.log();
 		console.log(`${chalk.cyan(`npx ${name} <project-directory>`)}`);
 		process.exit(1);
+	}
+}
+
+/**
+ * Shows the user a prompt with all available modules and then installs the modules
+ * which the user has selected.
+ * @param {string} destinationDirectory The target directory where to install the modules
+ * @param {string} gitRepoLocation The location on the local machine where to install
+ */
+async function installComponentsAndTheirDependencies(destinationDirectory, gitRepoLocation) {
+	// Change context to the target location, if not already
+	ensureProcessIsRunningInTheCorrectDirectory(destinationDirectory);
+
+	// Only install if ChilliFront App has been setup
+	if (fsExtra.existsSync('node_modules')) {
+		// Copy styles & modules
+		installUserSelectedComponents(gitRepoLocation);
+	} else {
+		console.log(
+			`The current directory does not look like a ${chalk.bold.red('create-react-app')} project.`
+		);
+		console.log('You can start over by deleting this directory and running the following command:');
+		console.log();
+		console.log(`${chalk.cyan(`npx ${name} <project-directory>`)}`);
+		process.exit(1);
+	}
+}
+
+/**
+ * Installs the components selected by the user into
+ * the target directory
+ * @param {string} gitRepoLocation The path to where to copy contents from
+ */
+async function installUserSelectedComponents(gitRepoLocation) {
+	// Make a directory for modules
+	generateDirectory('./src/components');
+	console.log('');
+	// Deal with CS.Front.Modules
+	console.log(`${chalk.yellow('Select your components. Fetching the latest list...')}`);
+	const chilliSourceFrontComponentList = await getDirectories(gitRepoLocation + '/components');
+
+	console.log('');
+	const userSelection = await inquirer.prompt([
+		{
+			message: 'Select components to import',
+			type: 'checkbox',
+			choices: chilliSourceFrontComponentList,
+			name: 'userSelectedComponents',
+		},
+	]);
+
+	// Get user selected modules
+	const components = userSelection['userSelectedComponents'];
+
+	if (components.length > 0) {
+		console.log('');
+		console.log(`You've ${chalk.green('selected')} the following components:`);
+		components.forEach(component => {
+			console.log(`--- ${chalk.cyan(component)}`);
+		});
+
+		// Install each component selected by user
+		console.log('');
+		console.log(`Installing components:`);
+		components.forEach(component => {
+			fsExtra.copySync(
+				path.join(gitRepoLocation, 'components', component),
+				path.join('./src/components', component)
+			);
+
+			console.log(`--- ${chalk.bold.cyan(component)} : Done`);
+		});
+
+		// Install dependencies
+		console.log('');
+		console.log(`Installing dependencies for selected components...`);
+		console.log('');
+		const dependencyList = getDependenciesForPackages('./src/components');
+
+		dependencyList.unshift('add');
+		const installStatus = await execa('yarn', dependencyList);
+		console.log(`--- ${installStatus.stdout}`);
+		console.log('');
+		console.log(`${chalk.cyan(`npx ${name} --only-components`)}`);
+		console.log('');
+		console.log('Happy coding!');
+		console.log('|‾‾‾‾‾‾‾‾‾‾‾‾|');
+		console.log('| BLUECHILLI |');
+		console.log('|____________|');
+		console.log('(__/) || ');
+		console.log('(•ㅅ•) || ');
+		console.log('/ 　 づ');
+		console.log('');
+	} else {
+		console.log('');
+		console.log(
+			`You ${chalk.bold.red(
+				"haven't"
+			)} installed any components at this time. You can do so later by running the following command:`
+		);
+		console.log('');
+		console.log(`${chalk.cyan(`npx ${name} --only-components`)}`);
+		console.log('');
+		console.log('Happy coding!');
+		console.log('|‾‾‾‾‾‾‾‾‾‾‾‾|');
+		console.log('| BLUECHILLI |');
+		console.log('|____________|');
+		console.log('(__/) || ');
+		console.log('(•ㅅ•) || ');
+		console.log('/ 　 づ');
+		console.log('');
 	}
 }
 
@@ -330,10 +445,23 @@ async function createReactAppWithChilliSourceFrontEndAt(templateDirectory, desti
 	console.log(`--- ${installNodeSass.stdout}`);
 }
 
+/**
+ * Ensures the process always runs in the correct directory
+ * @param {string} destinationDirectory The target directory where to install the modules
+ */
+const ensureProcessIsRunningInTheCorrectDirectory = destinationDirectory => {
+	// Ensure the process is running in the correct directory
+	const formattedDestinationDirectory = destinationDirectory.slice(2);
+	if (!process.cwd().includes(formattedDestinationDirectory)) {
+		process.chdir(formattedDestinationDirectory);
+	}
+};
+
 module.exports = {
 	createReactAppWithChilliSourceFrontEndAt,
 	installModulesAndTheirDependencies,
 	generateDirectory,
 	installStyleHelpers,
 	temporarilyCloneGitRepo,
+	installComponentsAndTheirDependencies,
 };
