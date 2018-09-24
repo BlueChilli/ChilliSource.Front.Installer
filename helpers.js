@@ -404,7 +404,9 @@ async function createReactAppWithChilliSourceFrontEndAt(templateDirectory, desti
 	execa.sync('npx', ['create-react-app', destinationDirectory]);
 
 	// Change context to the target location, if not already
-	ensureProcessIsRunningInTheCorrectDirectory(destinationDirectory);
+	if (!process.cwd().includes(destinationDirectory)) {
+		process.chdir(destinationDirectory);
+	}
 
 	// Install CS.Front.Core
 	console.log('');
