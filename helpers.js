@@ -300,7 +300,7 @@ async function installUserSelectedComponents(gitRepoLocation) {
 	console.log('');
 	const userSelection = await inquirer.prompt([
 		{
-			message: 'Select modules to import',
+			message: 'Select components to import',
 			type: 'checkbox',
 			choices: chilliSourceFrontComponentList,
 			name: 'userSelectedComponents',
