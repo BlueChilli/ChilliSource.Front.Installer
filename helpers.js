@@ -295,7 +295,7 @@ async function installUserSelectedComponents(gitRepoLocation) {
 	console.log('');
 	// Deal with CS.Front.Modules
 	console.log(`${chalk.yellow('Select your components. Fetching the latest list...')}`);
-	const chilliSourceFrontComponentList = await getDirectories(gitRepoLocation + '/components');
+	const chilliSourceFrontComponentList = await getDirectories(gitRepoLocation + '/src/components');
 
 	console.log('');
 	const userSelection = await inquirer.prompt([
@@ -322,7 +322,7 @@ async function installUserSelectedComponents(gitRepoLocation) {
 		console.log(`Installing components:`);
 		components.forEach(component => {
 			fsExtra.copySync(
-				path.join(gitRepoLocation, 'components', component),
+				path.join(gitRepoLocation, 'src/components', component),
 				path.join('./src/components', component)
 			);
 
