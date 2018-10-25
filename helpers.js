@@ -102,7 +102,7 @@ const installStyleHelpers = (destinationDirectory, gitRepoLocation) => {
 
 		// Copy directory to destination
 		return fsExtra.copy(
-			path.join(gitRepoLocation, 'style-helpers'),
+			path.join(gitRepoLocation, 'src/style-helpers'),
 			path.join('./src/style-helpers')
 		);
 	} else {
